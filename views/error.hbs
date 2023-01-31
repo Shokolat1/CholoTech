@@ -1,3 +1,12 @@
-<h1>{{message}}</h1>
-<h2>{{error.status}}</h2>
+{{>nav}}
+
+<br><br>
+
+<h1>¡Ups! Parece que hubo un problema...</h1>
+<h2>{{message}}</h2>
+<h3>{{error.status}}</h3>
 <pre>{{error.stack}}</pre>
+
+<br><br>
+
+{{>footer}}
