@@ -1,0 +1,25 @@
+/* body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00B7FF;
+} */
+
+.bg-cholo1{
+  background-image: url('/images/grafitti4.jpg');
+  background-position: center center;
+  background-size: cover;
+}
+
+.bg-cholo-txt{
+  background-color: rgba(0, 0, 0, 0.789);
+  border-radius: 10px;
+}
+
+.carousel-item > img{
+  background-size: contain;
+  height: 250px;
+  background-position: center center;
+}
