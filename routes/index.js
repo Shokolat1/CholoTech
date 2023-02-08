@@ -23,14 +23,25 @@ router.get('/escoger', function (req, res, next) {
 // 
 router.post('/escoger', async function (req, res, next) {
   let datosPC = Object.values(req.body)
-  
+
   let resAm = []
   let resML = []
-  let resCP = []
+  let resDD = []
 
   // for (let i = 0; i < datosPC.length; i++) {
   //   const dato = datosPC[i];
-  //   let respAll = await search(dato)
+
+  // Checar si vamos a obtener datos de RAM o SSD.
+  // En DDTech se necesita ser especifico con ambas, siendo que las opciones elegidas son algo generales
+  //   let ram = false
+  //   if (i == 2) ram = true
+  //   else ram = false
+
+  //   let ssd = false
+  //   if (i == 3) ssd = true
+  //   else ssd = false
+
+  //   let respAll = await search(dato, ram, ssd)
   //   resAm.push(respAll[0])
   //   resAm.push(respAll[1])
   //   resAm.push(respAll[2])
@@ -41,45 +52,55 @@ router.post('/escoger', async function (req, res, next) {
   //   const dato = datosPC[i];
   //   let respAm = await testAmazon(dato)
   //   resAm.push(respAm)
-  //   console.log(respAm)
   // }
+
+  // console.log(resAm)
 
   // PRUEBA MERCADO LIBRE
   // for (let i = 0; i < datosPC.length; i++) {
   //   const dato = datosPC[i];
   //   let respML = await testML(dato)
   //   resML.push(respML)
-  //   console.log(respML)
   // }
 
-  // PRUEBA CYBERPUERTA
+  // console.log(resML)
+
+  // PRUEBA DDTECH
   // for (let i = 0; i < datosPC.length; i++) {
   //   const dato = datosPC[i];
-  //   let respCP = await testCP(dato)
-  //   resML.push(respCP)
-  //   console.log(respCP)
+
+  // Checar si vamos a obtener datos de RAM o SSD.
+  // En DDTech se necesita ser especifico con ambas, siendo que las opciones elegidas son algo generales
+  //   let ram = false
+  //   if (i == 2) ram = true
+  //   else ram = false
+
+  //   let ssd = false
+  //   if (i == 3) ssd = true
+  //   else ssd = false
+
+  //   const respDD = await testDD(dato, ram, ssd)
+  //   resDD.push(respDD)
   // }
 
-  // await testML(datosPC[0])
-  // await testDoor(datosPC[0])
+  // console.log(resDD)
+
+  // FIXME: Renderizar vista de cosas encontradas
   // res.render('wait', { tab: 'CholoTech - Buscando...' })
 })
 
-// FUNCIONES -----------------------------------------------------------
+// FUNCIONES -------------------------------------------------------------------------------
 // Funcion de prueba Amazon
 async function testAmazon(dato) {
   const browser = await puppeteer.launch({ headless: false });
   const page = await browser.newPage();
 
-  await page.setDefaultTimeout(0);
+  page.setDefaultTimeout(0);
 
   await page.goto('https://www.amazon.com.mx/');
   await page.setViewport({ width: 900, height: 768 });
 
-
-  // setTimeout(async () => {
   await page.type('#twotabsearchtextbox', dato);
-  // }, 5000);
 
   const buscarAmazon = '#nav-search-submit-button';
   await page.waitForSelector(buscarAmazon);
@@ -122,143 +143,220 @@ async function testAmazon(dato) {
   }, price)
 
   // Precio de envio del producto
-  const send = '#mir-layout-DELIVERY_BLOCK-slot-PRIMARY_DELIVERY_MESSAGE_LARGE > span > a'
+  const send = '#mir-layout-DELIVERY_BLOCK-slot-PRIMARY_DELIVERY_MESSAGE_LARGE > span'
+
   const costEnvAm = await page.evaluate(send => {
+    let newS = ''
+
     let s = document.querySelector(send).innerHTML
-    return s
+    let i = s.indexOf("$")
+    if (i != -1) {
+      let dot = s.indexOf(".")
+      newS = s.slice(i, dot + 3)
+    } else {
+      newS = "Envío Gratis"
+    }
+    return newS
   }, send)
 
   let cosasAm = [nomAm, linkAm, descripAm, precioAm, costEnvAm]
 
-  setTimeout(() => {
-    browser.close();
-  }, 3000);
+  browser.close();
 
   return cosasAm
 }
 
-// FIXME: Hacer correcciones como Amazon
 // Funcion de prueba Mercado
 async function testML(dato) {
-  (async () => {
-    const browser = await puppeteer.launch({ headless: false });
-    const page = await browser.newPage();
+  const browser = await puppeteer.launch({ headless: false });
+  const page = await browser.newPage();
 
-    await page.goto('https://www.mercadolibre.com.mx/');
-    await page.setViewport({ width: 900, height: 768 });
+  page.setDefaultTimeout(0);
 
-    // const busML = '.nav-search-input';
-    // await page.waitForSelector(busML);
-    await page.type('#cb1-edit', dato);
+  await page.goto('https://www.mercadolibre.com.mx/');
+  await page.setViewport({ width: 900, height: 768 });
 
-    const buscarML = '.nav-search-btn';
-    await page.waitForSelector(buscarML);
-    await page.click(buscarML);
+  // const busML = '.nav-search-input';
+  // await page.waitForSelector(busML);
+  await page.type('#cb1-edit', dato);
 
-    const linkProdML = 'a > .ui-search-item__title'
-    await page.waitForSelector(linkProdML);
-    await page.click(linkProdML);
+  const buscarML = '.nav-search-btn';
+  await page.waitForSelector(buscarML);
+  await page.click(buscarML);
 
-    // Informacion a encontrar -----------------------------
-    // Nombre de producto
-    const nomML = dato
+  const linkProdML = 'a > .ui-search-item__title'
+  await page.waitForSelector(linkProdML);
+  await page.click(linkProdML);
 
-    // Link de producto
-    const linkML = page.url()
+  // Informacion a encontrar -----------------------------
+  // Nombre de producto
+  const nomML = dato
 
-    // Descripcion del producto
-    const descrip = '.ui-pdp-header > .ui-pdp-header__title-container > h1'
-    await page.waitForSelector(descrip);
-    const descripML = await page.evaluate(descrip => {
-      const d = document.querySelector(descrip);
-      return d.innerHTML
-    }, descrip)
+  // Link de producto
+  const linkML = page.url()
 
-    // Precio del producto
-    const price = 'div > .andes-money-amount > .andes-money-amount__fraction'
-    await page.waitForSelector(price);
-    const precioML = await page.evaluate(price => {
-      let elem = document.querySelector(price).innerHTML
-      let newS = `$${elem}`
-      return newS
-    }, price)
+  // Descripcion del producto
+  const descrip = '.ui-pdp-header > .ui-pdp-header__title-container > h1'
+  await page.waitForSelector(descrip);
+  const descripML = await page.evaluate(descrip => {
+    const d = document.querySelector(descrip);
+    return d.innerHTML
+  }, descrip)
 
-    // Precio de envio del producto
-    const send = '.andes-tooltip__trigger > .ui-pdp-color--GREEN'
-    const costEnvML = await page.evaluate(send => {
+  // Precio del producto
+  const price = 'div > span.andes-money-amount > span.andes-money-amount__fraction'
+  await page.waitForSelector(price);
+  const precioML = await page.evaluate(price => {
+    let elem = document.querySelector(price).innerHTML
+    let newS = `$${elem}`
+    return newS
+  }, price)
+
+  // Precio de envio del producto
+  const send = '.andes-tooltip__trigger > .ui-pdp-color--GREEN'
+  let newS = ''
+
+  if (await page.evaluate(send => { }) != null) {
+    await page.evaluate(send => {
       let s = document.querySelector(send).innerHTML
       let i = s.indexOf("<")
-      let newS = s.slice(0, i).trim()
-      return newS
+      newS = s.slice(0, i).trim()
     }, send)
+  } else {
+    newS = 'Envío gratis a todo el país'
+  }
+  const costEnvML = newS
 
-    let cosasCP = [nomML, linkML, descripML, precioML, costEnvML]
-    console.log(cosasCP)
-  })()
+  let cosasML = [nomML, linkML, descripML, precioML, costEnvML]
+
+  browser.close();
+
+  return cosasML
 }
 
-// FIXME: Hacer correcciones como Amazon
-// Funcion de prueba CyberPuerta
-async function testDoor(dato) {
-  (async () => {
-    const browser = await puppeteer.launch({ headless: false });
-    const page = await browser.newPage();
+// Funcion de prueba DDTech
+async function testDD(dato, ram, ssd) {
+  const browser = await puppeteer.launch({ headless: false });
+  const page = await browser.newPage();
 
-    await page.goto('https://www.cyberpuerta.mx/');
-    await page.setViewport({ width: 900, height: 768 });
+  await page.goto('https://ddtech.mx/', { 'waitUntil': 'load' });
+  await page.setViewport({ width: 1366, height: 720 });
+  page.waitForNavigation()
+  await waitTillHTMLRendered(page)
 
-    await page.type('.search-form > input[type="text"]', dato);
+  const busca = '.search-container > form > .input-group > #search';
+  await page.waitForSelector(busca, {
+    visible: true,
+  });
+  await page.click(busca);
+  await page.type(busca, dato);
 
-    await setTimeout(async () => {
-      const buscarDoor = '.submitButton';
-      await page.waitForSelector(buscarDoor);
-      await page.click(buscarDoor);
-    }, 5000);
+  const buscarDD = 'span.input-group-btn > .btn-seach';
+  await page.waitForSelector(buscarDD, {
+    visible: true,
+  });
+  await page.click(buscarDD);
 
-    const linkProdDoor = '#searchList-1'
-    await page.waitForSelector(linkProdDoor);
-    await page.click(linkProdDoor);
+  if (ram) {
+    const searchRAM = '.breadcrumb-custom > li > a[title="Memoria RAM"]'
+    await page.waitForSelector(searchRAM, {
+      visible: true,
+    });
+    await page.click(searchRAM);
+  }
 
-    // Informacion a encontrar -----------------------------
-    // Nombre de producto
-    const nomCP = dato
+  if (ssd) {
+    const onlySSD = '.breadcrumb-custom > li > a[title="Unidades SSD"]'
+    await page.waitForSelector(onlySSD, {
+      visible: true,
+    });
+    await page.click(onlySSD);
 
-    // Link de producto
-    const linkCP = page.url()
+    const searchSSD = '#stock'
+    await page.waitForSelector(searchSSD, {
+      visible: true,
+    });
+    await page.click(searchSSD);
+  }
 
-    // Descripcion del producto
-    const descrip = '.detailsInfo_right > h1.detailsInfo_right_title'
-    await page.waitForSelector(descrip);
-    const descripCP = await page.evaluate(descrip => {
-      const d = document.querySelector(descrip);
-      return d.innerHTML.trim()
-    }, descrip)
+  const linkProdDD = '.product-info > .name > a'
+  await page.waitForSelector(linkProdDD, {
+    visible: true,
+  });
+  await page.click(linkProdDD);
 
-    // Precio del producto
-    const price = '.detailsInfo_pricebox_main > .mainPrice > span.priceText'
-    await page.waitForSelector(price);
-    const precioCP = await page.evaluate(price => {
-      let elem = document.querySelector(price).innerHTML
-      let newS = elem.slice(0, -3)
-      return newS
-    }, price)
+  await waitTillHTMLRendered(page)
 
-    // Precio de envio del producto
-    const send = '.deliverycost > span.deliveryvalue'
-    const costEnvCP = await page.evaluate(send => {
-      let s = document.querySelector(send).innerHTML
-      let newS = s.slice(0, -3)
-      return newS
-    }, send)
+  // Informacion a encontrar -----------------------------
+  // Nombre de producto
+  const nomDD = dato
 
-    let cosasCP = [nomCP, linkCP, descripCP, precioCP, costEnvCP]
-    console.log(cosasCP)
-  })()
+  // Link de producto
+  const linkDD = page.url()
+
+  // Descripcion del producto
+  const descrip = '.product-info-block > .product-info > .description-container > p'
+  await page.waitForSelector(descrip, {
+    visible: true,
+  });
+  const descripDD = await page.evaluate(descrip => {
+    const d = document.querySelector(descrip);
+    return d.innerHTML.trim()
+  }, descrip)
+
+  // Precio del producto
+  const price = '.price-box > span.price'
+  await page.waitForSelector(price, {
+    visible: true,
+  });
+  const precioDD = await page.evaluate(price => {
+    let elem = document.querySelector(price).innerHTML
+    let newS = elem.trim().slice(0, -3)
+    return newS
+  }, price)
+
+  // Ir a ver el precio del envío
+  const carDD = '.quantity-container > .row > .col-sm-7 > .add-cart'
+  await page.waitForSelector(carDD, {
+    visible: true,
+  });
+  await page.click(carDD);
+
+  const verCar = 'ul.nav > li > a[title="Carrito"]'
+  await page.waitForSelector(verCar, {
+    visible: true,
+  });
+  await page.click(verCar);
+
+  await waitTillHTMLRendered(page)
+
+  // Precio de envio del producto
+  const send = '.cart-sub-total > .form-group > #shipping-price'
+  await page.waitForSelector(send, {
+    visible: true,
+  });
+  const costEnvDD = await page.evaluate(send => {
+    let s = document.querySelector(send).innerHTML
+    let newS = s.slice(0, -3)
+    return newS
+  }, send)
+
+  const elimCar = '#delete-entire-cart'
+  await page.waitForSelector(elimCar, {
+    visible: true,
+  });
+  await page.click(elimCar);
+
+  let cosasDD = [nomDD, linkDD, descripDD, precioDD, costEnvDD]
+
+  browser.close();
+
+  return cosasDD
 }
 
-// FIXME: Hacer correcciones como Amazon; agregar resultados en un orden especifico en un mismo arreglo
+// FIXME: Hacer correcciones con métodos de prueba arreglados; agregar resultados en un orden especifico en un mismo arreglo
 // Función búsqueda completa
-async function search(data) {
+async function search(data, ram, ssd) {
   const browser = await puppeteer.launch({ headless: false });
   const amazonPg = await browser.newPage();
   const mlPg = await browser.newPage();
@@ -418,5 +516,37 @@ async function search(data) {
     console.log(cosasCP)
   }, 5000);
 }
+
+// Función para esperar a que las paginas (en nuestro caso DDTech) carguen todos sus scripts y elementos
+const waitTillHTMLRendered = async (page, timeout = 30000) => {
+  const checkDurationMsecs = 1000;
+  const maxChecks = timeout / checkDurationMsecs;
+  let lastHTMLSize = 0;
+  let checkCounts = 1;
+  let countStableSizeIterations = 0;
+  const minStableSizeIterations = 3;
+
+  while (checkCounts++ <= maxChecks) {
+    let html = await page.content();
+    let currentHTMLSize = html.length;
+
+    // let bodyHTMLSize = await page.evaluate(() => document.body.innerHTML.length);
+    // console.log('last: ', lastHTMLSize, ' <> curr: ', currentHTMLSize, " body html size: ", bodyHTMLSize);
+
+    if (lastHTMLSize != 0 && currentHTMLSize == lastHTMLSize)
+      countStableSizeIterations++;
+    else
+      //Reiniciar contador
+      countStableSizeIterations = 0;
+
+    if (countStableSizeIterations >= minStableSizeIterations) {
+      console.log("Page rendered fully..");
+      break;
+    }
+
+    lastHTMLSize = currentHTMLSize;
+    await page.waitForTimeout(checkDurationMsecs);
+  }
+};
 
 module.exports = router;
