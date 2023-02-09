@@ -67,55 +67,80 @@ router.post('/escoger', async function (req, res, next) {
 
   // console.log(respDD)
 
-  for (let i = 0; i < datosPC.length; i++) {
-    const dato = datosPC[i];
+  // for (let i = 4; i < datosPC.length; i++) {
+  //   const dato = datosPC[i];
 
-    // Checar si vamos a obtener datos de RAM o SSD.
-    // En DDTech se necesita ser especifico con ambas, siendo que las opciones elegidas son algo generales
-    let ram = false
-    if (i == 2) ram = true
-    else ram = false
+  // Checar si vamos a obtener datos de RAM o SSD.
+  // En DDTech se necesita ser especifico con ambas, siendo que las opciones elegidas son algo generales
+  //   let ram = false
+  //   if (i == 2) ram = true
+  //   else ram = false
 
-    let ssd = false
-    if (i == 3) ssd = true
-    else ssd = false
+  //   let ssd = false
+  //   if (i == 3) ssd = true
+  //   else ssd = false
 
-    let respAll = await search(dato, ram, ssd)
-    resAm.push(respAll[0])
-    resML.push(respAll[1])
-    resDD.push(respAll[2])
-  }
+  //   let respAll = await search(dato, ram, ssd)
+  //   resAm.push(respAll[0])
+  //   resML.push(respAll[1])
+  //   resDD.push(respAll[2])
+  // }
 
-  console.log(resAm)
-  console.log(resML)
-  console.log(resDD)
+  // console.log(resAm)
+  // console.log(resML)
+  // console.log(resDD)
 
-  for (let i = 0; i < resAm.length; i++) {
-    let am = resAm[i][3]
-    let ml = resML[i][3]
-    let dd = resDD[i][3]
+  // for (let i = 0; i < resAm.length; i++) {
+  //   let am = resAm[i][3]
+  //   let ml = resML[i][3]
+  //   let dd = resDD[i][3]
 
-    let a = parseInt(am.slice(1).replace(',', ''))
-    let b = parseInt(ml.slice(1).replace(',', ''))
-    let c = parseInt(dd.slice(1).replace(',', ''))
+  //   let a = parseInt(am.slice(1).replace(',', ''))
+  //   let b = parseInt(ml.slice(1).replace(',', ''))
+  //   let c = parseInt(dd.slice(1).replace(',', ''))
 
-    let min = Math.min(a, b, c)
-    
-    if (a == min) resFin.push(resAm[i])
-    else if (b == min) resFin.push(resML[i])
-    else resFin.push(resDD[i])
+  //   let min = Math.min(a, b, c)
 
-    // console.log(Math.min(a, b, c))
-    // console.log(`Amazon: ${a}, Mercado: ${b}, DD: ${c}`)
-    // if (a == min) console.log('Amazon')
-    // else if (b == min) console.log('Mercado')
-    // else console.log('DDTech')
-  }
+  //   if (a == min) resFin.push(resAm[i])
+  //   else if (b == min) resFin.push(resML[i])
+  //   else resFin.push(resDD[i])
 
-  console.log(resFin)
+  // console.log(Math.min(a, b, c))
+  // console.log(`Amazon: ${a}, Mercado: ${b}, DD: ${c}`)
+  // if (a == min) console.log('Amazon')
+  // else if (b == min) console.log('Mercado')
+  // else console.log('DDTech')
+  // }
+
+  // console.log(resFin)
+
+  // nomAm, linkAm, descripAm, precioAm, costEnvAm, "Amazon"
+  let p = [
+    ['Gabinete DEEPCOOL CH510 MESH DIGITAL', 'https://www.amazon.com.mx/DeepCool-CH510-magn%C3%A9tico-integrado-auriculares/dp/B0BCFJHKRX/ref=sr_1_1?__mk_es_MX=%C3%85M%C3%85%C5%BD%C3%95%C3%91&crid=G7ZA9Z795MG6&keywords=Gabinete+DEEPCOOL+CH510+MESH+DIGITAL&qid=1675965903&sprefix=gabinete+deepcool+ch510+mesh+digital%2Caps%2C177&sr=8-1', 'DeepCool CH510 - Funda para PC ATX de alto flujo de aire soporta radiador de 360 mm superior/frontal ATX Gaming Case magnético vidrio templado con soporte de GPU integrado soporte para auriculares y puertos USB 3.0 frontales I/O, color negro', '$1,997', '$764.79', 'Amazon', 'https://m.media-amazon.com/images/I/71KszKgWNWL._AC_SY450_.jpg'],
+    ['Gabinete DEEPCOOL CH510 MESH DIGITAL', 'https://articulo.mercadolibre.com.mx/MLM-1788539737-gabinete-deepcool-ch510-mesh-digital-r-ch510-bknse1-g-1-_JM#position=1&search_layout=grid&type=item&tracking_id=6b87cc13-ccad-4adb-a07f-094bfc9d938a', 'Gabinete Deepcool Ch510 Mesh Digital R-ch510-bknse1-g-1', '$1,999', 'Envío gratis', 'Mercado', 'https://http2.mlstatic.com/D_NQ_NP_790302-MLM53499980109_012023-O.webp'],
+    ['Gabinete DEEPCOOL CH510 MESH DIGITAL', 'https://ddtech.mx/producto/gabinete-deepcool-ch510-mesh-digital-mini-itx-micro-atx-atx-e-atx-cristal-templado-incluye-1-ventilador-pantalla-incorporada-para-temperaturas-gpu-y-cpu?id=12427', 'Gabinete DEEPCOOL CH510 MESH DIGITAL / Mini-ITX / Micro-ATX / ATX / E-ATX / Cristal Templado / Incluye 1 ventilador / Pantalla Incorporada para temperaturas GPU y CPU', '$1,799', '$159', 'DDTech', 'https://m.media-amazon.com/images/I/71NCU1sMtqL._AC_SY355_.jpg'],
+    ['Gabinete DEEPCOOL CH510 MESH DIGITAL', 'https://www.amazon.com.mx/DeepCool-CH510-magn%C3%A9tico-integrado-auriculares/dp/B0BCFJHKRX/ref=sr_1_1?__mk_es_MX=%C3%85M%C3%85%C5%BD%C3%95%C3%91&crid=G7ZA9Z795MG6&keywords=Gabinete+DEEPCOOL+CH510+MESH+DIGITAL&qid=1675965903&sprefix=gabinete+deepcool+ch510+mesh+digital%2Caps%2C177&sr=8-1', 'DeepCool CH510 - Funda para PC ATX de alto flujo de aire soporta radiador de 360 mm superior/frontal ATX Gaming Case magnético vidrio templado con soporte de GPU integrado soporte para auriculares y puertos USB 3.0 frontales I/O, color negro', '$1,997', '$764.79', 'Amazon', 'https://m.media-amazon.com/images/I/71NCU1sMtqL._AC_SY355_.jpg'],
+    ['Gabinete DEEPCOOL CH510 MESH DIGITAL', 'https://articulo.mercadolibre.com.mx/MLM-1788539737-gabinete-deepcool-ch510-mesh-digital-r-ch510-bknse1-g-1-_JM#position=1&search_layout=grid&type=item&tracking_id=6b87cc13-ccad-4adb-a07f-094bfc9d938a', 'Gabinete Deepcool Ch510 Mesh Digital R-ch510-bknse1-g-1', '$1,999', 'Envío gratis', 'Mercado', 'https://http2.mlstatic.com/D_NQ_NP_790302-MLM53499980109_012023-O.webp'],
+    ['Gabinete DEEPCOOL CH510 MESH DIGITAL', 'https://ddtech.mx/producto/gabinete-deepcool-ch510-mesh-digital-mini-itx-micro-atx-atx-e-atx-cristal-templado-incluye-1-ventilador-pantalla-incorporada-para-temperaturas-gpu-y-cpu?id=12427', 'Gabinete DEEPCOOL CH510 MESH DIGITAL / Mini-ITX / Micro-ATX / ATX / E-ATX / Cristal Templado / Incluye 1 ventilador / Pantalla Incorporada para temperaturas GPU y CPU', '$1,799', '$159', 'DDTech', 'https://m.media-amazon.com/images/I/71NCU1sMtqL._AC_SY355_.jpg'],
+  ]
+
+  let p2 = []
+
+  p.forEach(el => {
+    let x = {
+      nom: el[0],
+      link: el[1],
+      descr: el[2],
+      price: el[3],
+      send: el[4],
+      company: el[5],
+      img: el[6]
+    }
+    p2.push(x)
+  });
 
   // TODO: Renderizar vista de cosas encontradas
-  // res.render('wait', { tab: 'CholoTech - Buscando...' })
+  res.render('foundProds', { tab: 'CholoTech - Productos Encontrados!', prods: p2 })
 })
 
 // FUNCIONES -------------------------------------------------------------------------------
