@@ -13,14 +13,8 @@ router.get('/escoger', function (req, res, next) {
   res.render('form', { tab: 'CholoTech - Formulario de Búsqueda' })
 })
 
-// TODO:
-// Pensando, mientras puppeteer encuentra la info
-
-// TODO:
-// Mostrar resultados
-
 // METODOS POST --------------------------------------------------------
-// 
+// Manda formulario y muestra los resultados
 router.post('/escoger', async function (req, res, next) {
   let datosPC = Object.values(req.body)
 
@@ -31,7 +25,7 @@ router.post('/escoger', async function (req, res, next) {
 
   // PRUEBA AMAZON
   // for (let i = 0; i < datosPC.length; i++) {
-  //   const dato = datosPC[i];
+  // const dato = datosPC[i];
   // let respAm = await testAmazon(dato)
   // resAm.push(respAm)
   // }
@@ -49,7 +43,7 @@ router.post('/escoger', async function (req, res, next) {
 
   // PRUEBA DDTECH
   // for (let i = 0; i < datosPC.length; i++) {
-  //   const dato = datosPC[i];
+  // const dato = datosPC[i];
 
   // Checar si vamos a obtener datos de RAM o SSD.
   // En DDTech se necesita ser especifico con ambas, siendo que las opciones elegidas son algo generales
@@ -61,72 +55,61 @@ router.post('/escoger', async function (req, res, next) {
   //   if (i == 3) ssd = true
   //   else ssd = false
 
-  // const respDD = await testDD(dato, false, false)
+  // const respDD = await testDD(dato, ram, ssd)
   // resDD.push(respDD)
   // }
 
-  // console.log(respDD)
-
-  // for (let i = 4; i < datosPC.length; i++) {
-  //   const dato = datosPC[i];
-
-  // Checar si vamos a obtener datos de RAM o SSD.
-  // En DDTech se necesita ser especifico con ambas, siendo que las opciones elegidas son algo generales
-  //   let ram = false
-  //   if (i == 2) ram = true
-  //   else ram = false
-
-  //   let ssd = false
-  //   if (i == 3) ssd = true
-  //   else ssd = false
-
-  //   let respAll = await search(dato, ram, ssd)
-  //   resAm.push(respAll[0])
-  //   resML.push(respAll[1])
-  //   resDD.push(respAll[2])
-  // }
-
-  // console.log(resAm)
-  // console.log(resML)
   // console.log(resDD)
 
-  // for (let i = 0; i < resAm.length; i++) {
-  //   let am = resAm[i][3]
-  //   let ml = resML[i][3]
-  //   let dd = resDD[i][3]
+  // METODO GENERAL USADO
+  for (let i = 0; i < datosPC.length; i++) {
+    const dato = datosPC[i];
 
-  //   let a = parseInt(am.slice(1).replace(',', ''))
-  //   let b = parseInt(ml.slice(1).replace(',', ''))
-  //   let c = parseInt(dd.slice(1).replace(',', ''))
+    // Checar si vamos a obtener datos de RAM o SSD.
+    // En DDTech se necesita ser especifico con ambas, siendo que las opciones elegidas son algo generales
+    let ram = false
+    if (i == 2) ram = true
+    else ram = false
 
-  //   let min = Math.min(a, b, c)
+    let ssd = false
+    if (i == 3) ssd = true
+    else ssd = false
 
-  //   if (a == min) resFin.push(resAm[i])
-  //   else if (b == min) resFin.push(resML[i])
-  //   else resFin.push(resDD[i])
+    let respAll = await search(dato, ram, ssd)
+    resAm.push(respAll[0])
+    resML.push(respAll[1])
+    resDD.push(respAll[2])
+  }
 
-  // console.log(Math.min(a, b, c))
-  // console.log(`Amazon: ${a}, Mercado: ${b}, DD: ${c}`)
-  // if (a == min) console.log('Amazon')
-  // else if (b == min) console.log('Mercado')
-  // else console.log('DDTech')
-  // }
+  for (let i = 0; i < resAm.length; i++) {
+    let am = resAm[i][3]
+    let ml = resML[i][3]
+    let dd = resDD[i][3]
 
-  // console.log(resFin)
+    let a = parseInt(am.slice(1).replace(',', ''))
+    let b = parseInt(ml.slice(1).replace(',', ''))
+    let c = parseInt(dd.slice(1).replace(',', ''))
+
+    let min = Math.min(a, b, c)
+
+    if (a == min) resFin.push(resAm[i])
+    else if (b == min) resFin.push(resML[i])
+    else resFin.push(resDD[i])
+  }
 
   // nomAm, linkAm, descripAm, precioAm, costEnvAm, "Amazon"
-  let p = [
-    ['Gabinete DEEPCOOL CH510 MESH DIGITAL', 'https://www.amazon.com.mx/DeepCool-CH510-magn%C3%A9tico-integrado-auriculares/dp/B0BCFJHKRX/ref=sr_1_1?__mk_es_MX=%C3%85M%C3%85%C5%BD%C3%95%C3%91&crid=G7ZA9Z795MG6&keywords=Gabinete+DEEPCOOL+CH510+MESH+DIGITAL&qid=1675965903&sprefix=gabinete+deepcool+ch510+mesh+digital%2Caps%2C177&sr=8-1', 'DeepCool CH510 - Funda para PC ATX de alto flujo de aire soporta radiador de 360 mm superior/frontal ATX Gaming Case magnético vidrio templado con soporte de GPU integrado soporte para auriculares y puertos USB 3.0 frontales I/O, color negro', '$1,997', '$764.79', 'Amazon', 'https://m.media-amazon.com/images/I/71KszKgWNWL._AC_SY450_.jpg'],
-    ['Gabinete DEEPCOOL CH510 MESH DIGITAL', 'https://articulo.mercadolibre.com.mx/MLM-1788539737-gabinete-deepcool-ch510-mesh-digital-r-ch510-bknse1-g-1-_JM#position=1&search_layout=grid&type=item&tracking_id=6b87cc13-ccad-4adb-a07f-094bfc9d938a', 'Gabinete Deepcool Ch510 Mesh Digital R-ch510-bknse1-g-1', '$1,999', 'Envío gratis', 'Mercado', 'https://http2.mlstatic.com/D_NQ_NP_790302-MLM53499980109_012023-O.webp'],
-    ['Gabinete DEEPCOOL CH510 MESH DIGITAL', 'https://ddtech.mx/producto/gabinete-deepcool-ch510-mesh-digital-mini-itx-micro-atx-atx-e-atx-cristal-templado-incluye-1-ventilador-pantalla-incorporada-para-temperaturas-gpu-y-cpu?id=12427', 'Gabinete DEEPCOOL CH510 MESH DIGITAL / Mini-ITX / Micro-ATX / ATX / E-ATX / Cristal Templado / Incluye 1 ventilador / Pantalla Incorporada para temperaturas GPU y CPU', '$1,799', '$159', 'DDTech', 'https://m.media-amazon.com/images/I/71NCU1sMtqL._AC_SY355_.jpg'],
-    ['Gabinete DEEPCOOL CH510 MESH DIGITAL', 'https://www.amazon.com.mx/DeepCool-CH510-magn%C3%A9tico-integrado-auriculares/dp/B0BCFJHKRX/ref=sr_1_1?__mk_es_MX=%C3%85M%C3%85%C5%BD%C3%95%C3%91&crid=G7ZA9Z795MG6&keywords=Gabinete+DEEPCOOL+CH510+MESH+DIGITAL&qid=1675965903&sprefix=gabinete+deepcool+ch510+mesh+digital%2Caps%2C177&sr=8-1', 'DeepCool CH510 - Funda para PC ATX de alto flujo de aire soporta radiador de 360 mm superior/frontal ATX Gaming Case magnético vidrio templado con soporte de GPU integrado soporte para auriculares y puertos USB 3.0 frontales I/O, color negro', '$1,997', '$764.79', 'Amazon', 'https://m.media-amazon.com/images/I/71NCU1sMtqL._AC_SY355_.jpg'],
-    ['Gabinete DEEPCOOL CH510 MESH DIGITAL', 'https://articulo.mercadolibre.com.mx/MLM-1788539737-gabinete-deepcool-ch510-mesh-digital-r-ch510-bknse1-g-1-_JM#position=1&search_layout=grid&type=item&tracking_id=6b87cc13-ccad-4adb-a07f-094bfc9d938a', 'Gabinete Deepcool Ch510 Mesh Digital R-ch510-bknse1-g-1', '$1,999', 'Envío gratis', 'Mercado', 'https://http2.mlstatic.com/D_NQ_NP_790302-MLM53499980109_012023-O.webp'],
-    ['Gabinete DEEPCOOL CH510 MESH DIGITAL', 'https://ddtech.mx/producto/gabinete-deepcool-ch510-mesh-digital-mini-itx-micro-atx-atx-e-atx-cristal-templado-incluye-1-ventilador-pantalla-incorporada-para-temperaturas-gpu-y-cpu?id=12427', 'Gabinete DEEPCOOL CH510 MESH DIGITAL / Mini-ITX / Micro-ATX / ATX / E-ATX / Cristal Templado / Incluye 1 ventilador / Pantalla Incorporada para temperaturas GPU y CPU', '$1,799', '$159', 'DDTech', 'https://m.media-amazon.com/images/I/71NCU1sMtqL._AC_SY355_.jpg'],
-  ]
+  // let p = [
+  //   ['Gabinete DEEPCOOL CH510 MESH DIGITAL', 'https://www.amazon.com.mx/DeepCool-CH510-magn%C3%A9tico-integrado-auriculares/dp/B0BCFJHKRX/ref=sr_1_1?__mk_es_MX=%C3%85M%C3%85%C5%BD%C3%95%C3%91&crid=G7ZA9Z795MG6&keywords=Gabinete+DEEPCOOL+CH510+MESH+DIGITAL&qid=1675965903&sprefix=gabinete+deepcool+ch510+mesh+digital%2Caps%2C177&sr=8-1', 'DeepCool CH510 - Funda para PC ATX de alto flujo de aire soporta radiador de 360 mm superior/frontal ATX Gaming Case magnético vidrio templado con soporte de GPU integrado soporte para auriculares y puertos USB 3.0 frontales I/O, color negro', '$1,997', '$764.79', 'Amazon', 'https://m.media-amazon.com/images/I/71KszKgWNWL._AC_SY450_.jpg'],
+  //   ['Gabinete DEEPCOOL CH510 MESH DIGITAL', 'https://articulo.mercadolibre.com.mx/MLM-1788539737-gabinete-deepcool-ch510-mesh-digital-r-ch510-bknse1-g-1-_JM#position=1&search_layout=grid&type=item&tracking_id=6b87cc13-ccad-4adb-a07f-094bfc9d938a', 'Gabinete Deepcool Ch510 Mesh Digital R-ch510-bknse1-g-1', '$1,999', 'Envío gratis', 'Mercado', 'https://http2.mlstatic.com/D_NQ_NP_790302-MLM53499980109_012023-O.webp'],
+  //   ['Gabinete DEEPCOOL CH510 MESH DIGITAL', 'https://ddtech.mx/producto/gabinete-deepcool-ch510-mesh-digital-mini-itx-micro-atx-atx-e-atx-cristal-templado-incluye-1-ventilador-pantalla-incorporada-para-temperaturas-gpu-y-cpu?id=12427', 'Gabinete DEEPCOOL CH510 MESH DIGITAL / Mini-ITX / Micro-ATX / ATX / E-ATX / Cristal Templado / Incluye 1 ventilador / Pantalla Incorporada para temperaturas GPU y CPU', '$1,799', '$159', 'DDTech', 'https://m.media-amazon.com/images/I/71NCU1sMtqL._AC_SY355_.jpg'],
+  //   ['Gabinete DEEPCOOL CH510 MESH DIGITAL', 'https://www.amazon.com.mx/DeepCool-CH510-magn%C3%A9tico-integrado-auriculares/dp/B0BCFJHKRX/ref=sr_1_1?__mk_es_MX=%C3%85M%C3%85%C5%BD%C3%95%C3%91&crid=G7ZA9Z795MG6&keywords=Gabinete+DEEPCOOL+CH510+MESH+DIGITAL&qid=1675965903&sprefix=gabinete+deepcool+ch510+mesh+digital%2Caps%2C177&sr=8-1', 'DeepCool CH510 - Funda para PC ATX de alto flujo de aire soporta radiador de 360 mm superior/frontal ATX Gaming Case magnético vidrio templado con soporte de GPU integrado soporte para auriculares y puertos USB 3.0 frontales I/O, color negro', '$1,997', '$764.79', 'Amazon', 'https://m.media-amazon.com/images/I/71NCU1sMtqL._AC_SY355_.jpg'],
+  //   ['Gabinete DEEPCOOL CH510 MESH DIGITAL', 'https://articulo.mercadolibre.com.mx/MLM-1788539737-gabinete-deepcool-ch510-mesh-digital-r-ch510-bknse1-g-1-_JM#position=1&search_layout=grid&type=item&tracking_id=6b87cc13-ccad-4adb-a07f-094bfc9d938a', 'Gabinete Deepcool Ch510 Mesh Digital R-ch510-bknse1-g-1', '$1,999', 'Envío gratis', 'Mercado', 'https://http2.mlstatic.com/D_NQ_NP_790302-MLM53499980109_012023-O.webp'],
+  //   ['Gabinete DEEPCOOL CH510 MESH DIGITAL', 'https://ddtech.mx/producto/gabinete-deepcool-ch510-mesh-digital-mini-itx-micro-atx-atx-e-atx-cristal-templado-incluye-1-ventilador-pantalla-incorporada-para-temperaturas-gpu-y-cpu?id=12427', 'Gabinete DEEPCOOL CH510 MESH DIGITAL / Mini-ITX / Micro-ATX / ATX / E-ATX / Cristal Templado / Incluye 1 ventilador / Pantalla Incorporada para temperaturas GPU y CPU', '$1,799', '$159', 'DDTech', 'https://m.media-amazon.com/images/I/71NCU1sMtqL._AC_SY355_.jpg'],
+  // ]
 
   let p2 = []
 
-  p.forEach(el => {
+  resFin.forEach(el => {
     let x = {
       nom: el[0],
       link: el[1],
@@ -139,7 +122,8 @@ router.post('/escoger', async function (req, res, next) {
     p2.push(x)
   });
 
-  // TODO: Renderizar vista de cosas encontradas
+  // FIXME: Usar resultados de busqueda general
+  // Renderizar vista de cosas encontradas
   res.render('foundProds', { tab: 'CholoTech - Productos Encontrados!', prods: p2 })
 })
 
@@ -213,7 +197,14 @@ async function testAmazon(dato) {
     return newS
   }, send)
 
-  let cosasAm = [nomAm, linkAm, descripAm, precioAm, costEnvAm]
+  // Imagen del producto
+  const img = 'li[data-csa-c-action="image-block-main-image-hover"] img'
+  await page.waitForSelector(img);
+  const image = await page.$$eval(img, (image) =>
+    image.map((img) => img.getAttribute("src"))
+  );
+
+  let cosasAm = [nomAm, linkAm, descripAm, precioAm, costEnvAm, "Amazon", image]
 
   browser.close();
 
@@ -230,8 +221,6 @@ async function testML(dato) {
   await page.goto('https://www.mercadolibre.com.mx/');
   await page.setViewport({ width: 900, height: 768 });
 
-  // const busML = '.nav-search-input';
-  // await page.waitForSelector(busML);
   await page.type('#cb1-edit', dato);
 
   const buscarML = '.nav-search-btn';
@@ -281,7 +270,17 @@ async function testML(dato) {
   }
   const costEnvML = newS
 
-  let cosasML = [nomML, linkML, descripML, precioML, costEnvML]
+  const img = 'img.ui-pdp-image.ui-pdp-gallery__figure__image[src]'
+  await page.waitForSelector(img, {
+    visible: true,
+  });
+  const imgs = await page.$$eval(img, (imgs) =>
+    imgs.map((img) => img.getAttribute("src"))
+  );
+  const filter = imgs.filter((img) => img.startsWith("h"));
+  const image = filter[0];
+
+  let cosasML = [nomML, linkML, descripML, precioML, costEnvML, "Mercado", image]
 
   browser.close();
 
@@ -375,6 +374,15 @@ async function testDD(dato, ram, ssd) {
     return newS
   }, price)
 
+  const img = '#slideslide0 > a > .img-responsive'
+  await page.waitForSelector(img, {
+    visible: true,
+  });
+  const imagen = await page.$$eval(img, (image) =>
+    image.map((img) => img.getAttribute("src"))
+  );
+  const image = imagen[0]
+
   // Ir a ver el precio del envío
   const carDD = '.quantity-container > .row > .col-sm-7 > .add-cart'
   await page.waitForSelector(carDD, {
@@ -413,7 +421,7 @@ async function testDD(dato, ram, ssd) {
   });
   await page.click(elimCar);
 
-  let cosasDD = [nomDD, linkDD, descripDD, precioDD, costEnvDD]
+  let cosasDD = [nomDD, linkDD, descripDD, precioDD, costEnvDD, image]
 
   browser.close();
 
@@ -423,9 +431,9 @@ async function testDD(dato, ram, ssd) {
 // Función búsqueda completa
 async function search(dato, ram, ssd) {
   const browser = await puppeteer.launch({ headless: false });
-  const amazonPg = await browser.newPage();
   const mlPg = await browser.newPage();
   const ddPg = await browser.newPage();
+  const amazonPg = await browser.newPage();
 
   amazonPg.setDefaultTimeout(0);
   mlPg.setDefaultTimeout(0);
@@ -472,11 +480,11 @@ async function search(dato, ram, ssd) {
   await ddPg.click(buscarDD);
 
   // Buscar resultado de 4 estrellas o mas en Amazon
-  const cuatroOmas = 'section > .a-star-medium-4'
-  await amazonPg.waitForSelector(cuatroOmas, {
-    visible: true,
-  });
-  await amazonPg.click(cuatroOmas);
+  // const cuatroOmas = 'section > .a-star-medium-4'
+  // await amazonPg.waitForSelector(cuatroOmas, {
+  //   visible: true,
+  // });
+  // await amazonPg.click(cuatroOmas);
 
   // Se va al primer producto encontrado
   const linkprodAmazon = 'span[data-component-type="s-product-image"] > a'
@@ -485,7 +493,7 @@ async function search(dato, ram, ssd) {
   });
   await amazonPg.click(linkprodAmazon);
 
-  const linkProdML = 'a > .ui-search-item__title'
+  const linkProdML = '.ui-search-item__title'
   await mlPg.waitForSelector(linkProdML, {
     visible: true,
   });
@@ -524,7 +532,6 @@ async function search(dato, ram, ssd) {
     await ddPg.click(searchSSD);
 
     await waitTillHTMLRendered(ddPg)
-
   }
 
   const linkProdDD = '.product-info > .name > a'
@@ -607,20 +614,53 @@ async function search(dato, ram, ssd) {
     return newS
   }, price3)
 
+  // Imagen del producto
+  const img1 = 'li[data-csa-c-action="image-block-main-image-hover"] img'
+  await amazonPg.waitForSelector(img1, {
+    visible: true,
+  })
+  const imagen1 = await amazonPg.$$eval(img1, (image) =>
+    image.map((img) => img.getAttribute("src"))
+  );
+  const image1 = imagen1[0]
+
+  const img2 = 'img.ui-pdp-image.ui-pdp-gallery__figure__image[src]'
+  await mlPg.waitForSelector(img2, {
+    visible: true,
+  });
+  const imgs2 = await mlPg.$$eval(img2, (imgs2) =>
+    imgs2.map((img) => img.getAttribute("src"))
+  );
+  const filter = imgs2.filter((img) => img.startsWith("h"));
+  const image2 = filter[0];
+
+  const img3 = '#slideslide0 > a > .img-responsive'
+  await ddPg.waitForSelector(img3, {
+    visible: true,
+  });
+  const imagen3 = await ddPg.$$eval(img3, (image) =>
+    image.map((img) => img.getAttribute("src"))
+  );
+  const image3 = imagen3[0]
+
   // Precio de envio del producto
+  let amNewS = ''
   const send1 = '#mir-layout-DELIVERY_BLOCK-slot-PRIMARY_DELIVERY_MESSAGE_LARGE > span'
-  const costEnvAm = await amazonPg.evaluate(send1 => {
-    let newS = ''
-    let s = document.querySelector(send1).innerHTML
-    let i = s.indexOf("$")
-    if (i != -1) {
-      let dot = s.indexOf(".")
-      newS = s.slice(i, dot + 3)
-    } else {
-      newS = "Envío Gratis"
-    }
-    return newS
-  }, send1)
+  if (await amazonPg.evaluate(send1 => { }) != null) {
+    await amazonPg.evaluate(send1 => {
+      let s = document.querySelector(send1).innerHTML
+      let i = s.indexOf("$")
+      if (i != -1) {
+        let dot = s.indexOf(".")
+        amNewS = s.slice(i, dot + 3)
+      } else {
+        amNewS = "Envío Gratis"
+      }
+    }, send1)
+  } else {
+    amNewS = "Envío Gratis"
+  }
+  const costEnvAm = amNewS
 
   let newS = ''
   const send2 = '.andes-tooltip__trigger > .ui-pdp-color--GREEN'
@@ -655,7 +695,6 @@ async function search(dato, ram, ssd) {
 
   await waitTillHTMLRendered(ddPg)
 
-  // Precio de envio del producto
   const send3 = '#shipping-price'
   await ddPg.waitForSelector(send3, {
     visible: true,
@@ -672,9 +711,9 @@ async function search(dato, ram, ssd) {
   });
   await ddPg.click(elimCarDD);
 
-  const cosasAmazon = [nomAm, linkAm, descripAm, precioAm, costEnvAm, "Amazon"]
-  const cosasMerLib = [nomML, linkML, descripML, precioML, costEnvML, "Mercado"]
-  const cosasDD = [nomDD, linkDD, descripDD, precioDD, costEnvDD, "DDTech"]
+  const cosasAmazon = [nomAm, linkAm, descripAm, precioAm, costEnvAm, "Amazon", image1]
+  const cosasMerLib = [nomML, linkML, descripML, precioML, costEnvML, "Mercado", image2]
+  const cosasDD = [nomDD, linkDD, descripDD, precioDD, costEnvDD, "DDTech", image3]
   const cosasAll = [cosasAmazon, cosasMerLib, cosasDD]
 
   await browser.close();
