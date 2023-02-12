@@ -106,3 +106,96 @@ button:active {
 ::-webkit-scrollbar-thumb:hover {
   background-color: #6c7374;
 }
+
+/* Botón de descarga */
+.cholo_button {
+  --width: 180px;
+  --height: 50px;
+  --tooltip-height: 35px;
+  --tooltip-width: 90px;
+  --gap-between-tooltip-to-button: 18px;
+  --button-color: #1163ff;
+  --tooltip-color: #fff;
+  width: var(--width);
+  height: var(--height);
+  background: var(--button-color);
+  position: relative;
+  text-align: center;
+  border-radius: 0.45em;
+  font-family: "Arial";
+  transition: background 0.3s;
+}
+
+.cholo_button::before {
+  position: absolute;
+  content: attr(data-tooltip);
+  width: var(--tooltip-width);
+  height: var(--tooltip-height);
+  background-color: var(--tooltip-color);
+  font-size: 0.9rem;
+  color: #111;
+  border-radius: .25em;
+  line-height: var(--tooltip-height);
+  bottom: calc(var(--height) + var(--gap-between-tooltip-to-button) + 10px);
+  left: calc(50% - var(--tooltip-width) / 2);
+}
+
+.cholo_button::after {
+  position: absolute;
+  content: '';
+  width: 0;
+  height: 0;
+  border: 10px solid transparent;
+  border-top-color: var(--tooltip-color);
+  left: calc(50% - 10px);
+  bottom: calc(100% + var(--gap-between-tooltip-to-button) - 10px);
+}
+
+.cholo_button::after,.cholo_button::before {
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.5s;
+}
+
+.cholo_text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cholo_button-wrapper,.cholo_text,.cholo_icon {
+  overflow: hidden;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  color: #fff;
+}
+
+.cholo_text {
+  top: 0
+}
+
+.cholo_text,.cholo_icon {
+  transition: top 0.5s;
+}
+
+.cholo_icon {
+  color: #fff;
+  top: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cholo_button:hover {
+  background: #6830c8;
+}
+
+.cholo_button:hover .cholo_text {
+  top: -100%;
+}
+
+.cholo_button:hover .cholo_icon {
+  top: 0;
+}

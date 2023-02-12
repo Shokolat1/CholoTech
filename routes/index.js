@@ -65,8 +65,8 @@ router.post('/escoger', async function (req, res, next) {
   for (let i = 0; i < datosPC.length; i++) {
     const dato = datosPC[i];
 
-    // Checar si vamos a obtener datos de RAM o SSD.
-    // En DDTech se necesita ser especifico con ambas, siendo que las opciones elegidas son algo generales
+  // Checar si vamos a obtener datos de RAM o SSD.
+  // En DDTech se necesita ser especifico con ambas, siendo que las opciones elegidas son algo generales
     let ram = false
     if (i == 2) ram = true
     else ram = false
@@ -97,7 +97,7 @@ router.post('/escoger', async function (req, res, next) {
     else resFin.push(resDD[i])
   }
 
-  // nomAm, linkAm, descripAm, precioAm, costEnvAm, "Amazon"
+  // Test things
   // let p = [
   //   ['Gabinete DEEPCOOL CH510 MESH DIGITAL', 'https://www.amazon.com.mx/DeepCool-CH510-magn%C3%A9tico-integrado-auriculares/dp/B0BCFJHKRX/ref=sr_1_1?__mk_es_MX=%C3%85M%C3%85%C5%BD%C3%95%C3%91&crid=G7ZA9Z795MG6&keywords=Gabinete+DEEPCOOL+CH510+MESH+DIGITAL&qid=1675965903&sprefix=gabinete+deepcool+ch510+mesh+digital%2Caps%2C177&sr=8-1', 'DeepCool CH510 - Funda para PC ATX de alto flujo de aire soporta radiador de 360 mm superior/frontal ATX Gaming Case magnético vidrio templado con soporte de GPU integrado soporte para auriculares y puertos USB 3.0 frontales I/O, color negro', '$1,997', '$764.79', 'Amazon', 'https://m.media-amazon.com/images/I/71KszKgWNWL._AC_SY450_.jpg'],
   //   ['Gabinete DEEPCOOL CH510 MESH DIGITAL', 'https://articulo.mercadolibre.com.mx/MLM-1788539737-gabinete-deepcool-ch510-mesh-digital-r-ch510-bknse1-g-1-_JM#position=1&search_layout=grid&type=item&tracking_id=6b87cc13-ccad-4adb-a07f-094bfc9d938a', 'Gabinete Deepcool Ch510 Mesh Digital R-ch510-bknse1-g-1', '$1,999', 'Envío gratis', 'Mercado', 'https://http2.mlstatic.com/D_NQ_NP_790302-MLM53499980109_012023-O.webp'],
@@ -122,7 +122,6 @@ router.post('/escoger', async function (req, res, next) {
     p2.push(x)
   });
 
-  // FIXME: Usar resultados de busqueda general
   // Renderizar vista de cosas encontradas
   res.render('foundProds', { tab: 'CholoTech - Productos Encontrados!', prods: p2 })
 })

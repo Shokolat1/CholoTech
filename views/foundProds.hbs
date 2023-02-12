@@ -1,34 +1,82 @@
-{{>nav}}
+<div id="elementToPrint" style="margin:0px;padding:0px;">
+    {{>nav}}
 
-<section class="py-2">
-    <div class="container px-4 px-lg-5 mt-5">
-        <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-3 justify-content-center">
-            {{#each prods}}
-            <div class="col mb-5">
-                <div class="card h-100 align-items-center py-2">
-                    <!-- Product image-->
-                    <img class="card-img-top img-fluid" src={{this.img}} alt="..." style="width:200px;height:200px;object-fit:contain;"/>
-                    <!-- Product details-->
-                    <div class="card-body p-3">
-                        <div class="text-center">
-                            <!-- Product name-->
-                            <h5 class="fw-bolder">{{this.nom}}</h5>
-                            <!-- Product price-->
-                            {{this.descr}}
-                            <br><br>
+    <section class="py-2">
+        <div class="container px-4 px-lg-5 mt-5">
+            <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-3 justify-content-center">
+                {{#each prods}}
+                <div class="col mb-5">
+                    <div class="card h-100 align-items-center py-2">
+                        <!-- Imagen del producto-->
+                        <img class="card-img-top img-fluid" src={{this.img}} alt="..."
+                            style="width:200px;height:200px;object-fit:contain;" />
+                        <div class="card-body p-3">
+                            <div class="text-center">
+                                <!-- Nombre del producto-->
+                                <h5 class="fw-bolder">{{this.nom}}</h5>
+                                <!-- Descripción del producto-->
+                                {{this.descr}}
+                                <br><br>
+                            </div>
+                        </div>
+
+                        <div class="card-footer p-4 pt-0 border-top-0 bg-transparent">
+                            <p class="text-center"><strong>{{this.price}}</strong> <img
+                                    src="/images/{{this.company}}.png" alt="..."
+                                    style="width:50px;height:50px;object-fit:contain;margin-left:5px;"></p>
+                            <p class="text-center">Precio de envío: {{this.send}}</strong></p>
+                            <div class="text-center"><a class="btn btn-outline-dark mt-auto"
+                                    href={{this.link}}>Comprar</a>
+                            </div>
                         </div>
                     </div>
-                    <!-- Product actions-->
-                    <div class="card-footer p-4 pt-0 border-top-0 bg-transparent">
-                            <p class="text-center"><strong>{{this.price}}</strong> <img src="/images/{{this.company}}.png" alt="..." style="width:50px;height:50px;object-fit:contain;margin-left:5px;"></p>
-                            <p class="text-center">Precio de envío: {{this.send}}</strong></p>
-                        <div class="text-center"><a class="btn btn-outline-dark mt-auto" href={{this.link}}>Comprar</a> </div>
-                    </div>
                 </div>
+                {{/each}}
             </div>
-            {{/each}}
+        </div>
+    </section>
+</div>
+
+<center>
+    <div class="cholo_button my-3" id="btnDnld">
+        <div class="cholo_button-wrapper">
+            <div class="cholo_text">Descargar Resultados</div>
+            <span class="cholo_icon">
+                <svg viewBox="0 0 24 24" preserveAspectRatio="xMidYMid meet" height="2em" width="2em" role="img"
+                    aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17"
+                        stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke="currentColor"
+                        fill="none">
+                    </path>
+                </svg>
+            </span>
         </div>
     </div>
-</section>
+</center>
 
 {{>footer}}
+
+<script src="/javascripts/html2pdf.bundle.min.js"></script>
+<script>
+    let btnDnld = document.getElementById('btnDnld')
+    let element = document.getElementById('elementToPrint')
+
+    let opt = {
+        margin: 0,
+        filename: 'Found_Products.pdf',
+        jsPDF: { format: 'letter', orientation: 'portrait' },
+        pagebreak: { mode: 'css' },
+        html2canvas: {
+            enableLinks: true,
+            scale: 1,
+            scrollY: 0,
+        }
+    };
+
+    btnDnld.addEventListener('click', () => {
+        setTimeout(() => {
+            html2pdf().set(opt).from(element).save();
+        }, 300);
+    });
+</script>
