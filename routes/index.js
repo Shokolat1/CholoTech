@@ -1,6 +1,10 @@
 var express = require('express');
 var router = express.Router();
-var puppeteer = require('puppeteer')
+var puppeteer = require('puppeteer-extra')
+
+const StealthPlugin = require('puppeteer-extra-plugin-stealth')
+puppeteer.use(StealthPlugin())
+const { executablePath } = require('puppeteer')
 
 // METODOS GET ----------------------------------------------------------
 // Pagina Principal
@@ -25,9 +29,9 @@ router.post('/escoger', async function (req, res, next) {
 
   // PRUEBA AMAZON
   // for (let i = 0; i < datosPC.length; i++) {
-  // const dato = datosPC[i];
-  // let respAm = await testAmazon(dato)
-  // resAm.push(respAm)
+  //   const dato = datosPC[i];
+  //   let respAm = await testAmazon(dato)
+  //   resAm.push(respAm)
   // }
 
   // console.log(resAm)
@@ -35,15 +39,15 @@ router.post('/escoger', async function (req, res, next) {
   // PRUEBA MERCADO LIBRE
   // for (let i = 0; i < datosPC.length; i++) {
   //   const dato = datosPC[i];
-  // let respML = await testML(dato)
-  // resML.push(respML)
+  //   let respML = await testML(dato)
+  //   resML.push(respML)
   // }
 
   // console.log(resML)
 
   // PRUEBA DDTECH
   // for (let i = 0; i < datosPC.length; i++) {
-  // const dato = datosPC[i];
+  //   const dato = datosPC[i];
 
   // Checar si vamos a obtener datos de RAM o SSD.
   // En DDTech se necesita ser especifico con ambas, siendo que las opciones elegidas son algo generales
@@ -55,8 +59,8 @@ router.post('/escoger', async function (req, res, next) {
   //   if (i == 3) ssd = true
   //   else ssd = false
 
-  // const respDD = await testDD(dato, ram, ssd)
-  // resDD.push(respDD)
+  //   const respDD = await testDD(dato, ram, ssd)
+  //   resDD.push(respDD)
   // }
 
   // console.log(resDD)
@@ -65,17 +69,36 @@ router.post('/escoger', async function (req, res, next) {
   for (let i = 0; i < datosPC.length; i++) {
     const dato = datosPC[i];
 
-  // Checar si vamos a obtener datos de RAM o SSD.
-  // En DDTech se necesita ser especifico con ambas, siendo que las opciones elegidas son algo generales
+    // Checar si vamos a obtener datos de RAM o SSD.
+    // En DDTech se necesita ser especifico con ambas, siendo que las opciones elegidas son algo generales
     let ram = false
-    if (i == 2) ram = true
+    let ramCap = ''
+    if (i == 2) {
+      ram = true
+      let str1 = datosPC[i].indexOf('G')
+      ramCap = datosPC[i].slice(str1 - 2).trim().toLowerCase()
+      if(ramCap == '32gb') ramCap = `${ramCap}-2`
+    }
     else ram = false
 
     let ssd = false
-    if (i == 3) ssd = true
+    let ssdCap = ''
+    if (i == 3) {
+      ssd = true
+
+      if (datosPC[i].includes('GB')) {
+        let str1 = datosPC[i].indexOf('T')
+        ssdCap = datosPC[i].slice(str1 - 4).trim().toLowerCase()
+      } else {
+        let str1 = datosPC[i].indexOf('G')
+        let str2 = datosPC[i].slice(str1 - 2).trim().toLowerCase()
+        if(str2.includes('1')) ssdCap = `${str2}-1`
+        else ssdCap = `${str2}-3`
+      }
+    }
     else ssd = false
 
-    let respAll = await search(dato, ram, ssd)
+    let respAll = await search(dato, ram, ramCap, ssd, ssdCap)
     resAm.push(respAll[0])
     resML.push(respAll[1])
     resDD.push(respAll[2])
@@ -134,7 +157,7 @@ async function testAmazon(dato) {
 
   page.setDefaultTimeout(0);
 
-  await page.goto('https://www.amazon.com.mx/');
+  await page.goto('https://www.amazon.com.mx/', { 'waitUntil': 'load' });
   await page.setViewport({ width: 900, height: 768 });
 
   await page.type('#twotabsearchtextbox', dato);
@@ -182,19 +205,22 @@ async function testAmazon(dato) {
   // Precio de envio del producto
   const send = '#mir-layout-DELIVERY_BLOCK-slot-PRIMARY_DELIVERY_MESSAGE_LARGE > span'
 
-  const costEnvAm = await page.evaluate(send => {
-    let newS = ''
-
-    let s = document.querySelector(send).innerHTML
-    let i = s.indexOf("$")
-    if (i != -1) {
-      let dot = s.indexOf(".")
-      newS = s.slice(i, dot + 3)
-    } else {
-      newS = "Envío Gratis"
-    }
-    return newS
-  }, send)
+  let amNewS = ''
+  if (await page.evaluate(send => { }) != null) {
+    await page.evaluate(send => {
+      let s = document.querySelector(send).innerHTML
+      let i = s.indexOf("$")
+      if (i != -1) {
+        let dot = s.indexOf(".")
+        amNewS = s.slice(i, dot + 3)
+      } else {
+        amNewS = "Envío Gratis"
+      }
+    }, send1)
+  } else {
+    amNewS = "Envío Gratis"
+  }
+  const costEnvAm = amNewS
 
   // Imagen del producto
   const img = 'li[data-csa-c-action="image-block-main-image-hover"] img'
@@ -226,7 +252,9 @@ async function testML(dato) {
   await page.waitForSelector(buscarML);
   await page.click(buscarML);
 
-  const linkProdML = 'a > .ui-search-item__title'
+  await page.waitForTimeout(7000)
+
+  const linkProdML = 'a .ui-search-item__title'
   await page.waitForSelector(linkProdML);
   await page.click(linkProdML);
 
@@ -246,8 +274,10 @@ async function testML(dato) {
   }, descrip)
 
   // Precio del producto
-  const price = 'div > span.andes-money-amount > span.andes-money-amount__fraction'
-  await page.waitForSelector(price);
+  const price = '.ui-pdp-price__second-line > .andes-money-amount > .andes-money-amount__fraction'
+  await page.waitForSelector(price, {
+    visible: true,
+  });
   const precioML = await page.evaluate(price => {
     let elem = document.querySelector(price).innerHTML
     let newS = `$${elem}`
@@ -287,437 +317,447 @@ async function testML(dato) {
 }
 
 // Funcion de prueba DDTech
-async function testDD(dato, ram, ssd) {
-  const browser = await puppeteer.launch({ headless: false });
-  const page = await browser.newPage();
+async function testDD(dato, ram, ramCap, ssd, ssdCap) {
+  const ddTech = await puppeteer.launch({ headless: false, executablePath: executablePath() }).then(async browser => {
+    const page = await browser.newPage();
 
-  await page.goto('https://ddtech.mx/', { 'waitUntil': 'load' });
-  await page.setViewport({ width: 1366, height: 720 });
-  page.waitForNavigation()
-  await waitTillHTMLRendered(page)
+    await page.goto('https://ddtech.mx/', { 'waitUntil': 'load' });
+    await page.setViewport({ width: 1366, height: 720 });
 
-  const busca = '.search-container > form > .input-group > #search';
-  await page.waitForSelector(busca, {
-    visible: true,
-  });
-  await page.click(busca);
-  await page.type(busca, dato);
+    // await ddPg.waitForNavigation()
+    await page.waitForTimeout(7000)
+    await waitTillHTMLRendered(page)
 
-  const buscarDD = 'span.input-group-btn > .btn-seach';
-  await page.waitForSelector(buscarDD, {
-    visible: true,
-  });
-  await page.click(buscarDD);
-
-  if (ram) {
-    const onlyRAM = '.breadcrumb-custom > li > a[title="Memoria RAM"]'
-    await page.waitForSelector(onlyRAM, {
+    const busca = '.search-container > form > .input-group > #search';
+    await page.waitForSelector(busca, {
       visible: true,
     });
-    await page.click(onlyRAM);
+    await page.click(busca);
+    await page.type(busca, dato);
 
-    const searchRAM = '#stock'
-    await page.waitForSelector(searchRAM, {
+    const buscarDD = 'span.input-group-btn > .btn-seach';
+    await page.waitForSelector(buscarDD, {
       visible: true,
     });
-    await page.click(searchRAM);
-  }
+    await page.click(buscarDD);
 
-  if (ssd) {
-    const onlySSD = '.breadcrumb-custom > li > a[title="Unidades SSD"]'
-    await page.waitForSelector(onlySSD, {
+    if (ram) {
+      const onlyRAM = '.breadcrumb-custom > li > a[title="Memoria RAM"]'
+      await page.waitForSelector(onlyRAM, {
+        visible: true,
+      });
+      await page.click(onlyRAM);
+
+      const searchRAM = `ul input[data-slug="${ramCap}"]`
+      await page.waitForSelector(searchRAM, {
+        visible: true,
+      });
+      await page.click(searchRAM);
+    }
+
+    if (ssd) {
+      const onlySSD = '.breadcrumb-custom > li > a[title="Unidades SSD"]'
+      await page.waitForSelector(onlySSD, {
+        visible: true,
+      });
+      await page.click(onlySSD);
+
+      const searchSSD = `ul input[data-slug="${ssdCap}"]`
+      await page.waitForSelector(searchSSD, {
+        visible: true,
+      });
+      await page.click(searchSSD);
+    }
+
+    const linkProdDD = '.product-info > .name > a'
+    await page.waitForSelector(linkProdDD, {
       visible: true,
     });
-    await page.click(onlySSD);
+    await page.click(linkProdDD);
 
-    const searchSSD = '#stock'
-    await page.waitForSelector(searchSSD, {
+    await waitTillHTMLRendered(page)
+
+    // Informacion a encontrar -----------------------------
+    // Nombre de producto
+    const nomDD = dato
+
+    // Link de producto
+    const linkDD = page.url()
+
+    // Descripcion del producto
+    const descrip = '.product-info-block > .product-info > .description-container > p'
+    await page.waitForSelector(descrip, {
       visible: true,
     });
-    await page.click(searchSSD);
-  }
+    const descripDD = await page.evaluate(descrip => {
+      const d = document.querySelector(descrip);
+      return d.innerHTML.trim()
+    }, descrip)
 
-  const linkProdDD = '.product-info > .name > a'
-  await page.waitForSelector(linkProdDD, {
-    visible: true,
-  });
-  await page.click(linkProdDD);
+    // Precio del producto
+    const price = '.price-box > span.price'
+    await page.waitForSelector(price, {
+      visible: true,
+    });
+    const precioDD = await page.evaluate(price => {
+      let elem = document.querySelector(price).innerHTML
+      let newS = elem.trim().slice(0, -3)
+      return newS
+    }, price)
 
-  await waitTillHTMLRendered(page)
+    const img = '#slideslide0 > a > .img-responsive'
+    await page.waitForSelector(img, {
+      visible: true,
+    });
+    const imagen = await page.$$eval(img, (image) =>
+      image.map((img) => img.getAttribute("src"))
+    );
+    const image = imagen[0]
 
-  // Informacion a encontrar -----------------------------
-  // Nombre de producto
-  const nomDD = dato
+    await page.waitForTimeout(7000)
 
-  // Link de producto
-  const linkDD = page.url()
+    // Ir a ver el precio del envío
+    const carDD = '.quantity-container > .row > .col-sm-7 > .add-cart'
+    await page.waitForSelector(carDD, {
+      visible: true,
+    });
+    await page.click(carDD);
 
-  // Descripcion del producto
-  const descrip = '.product-info-block > .product-info > .description-container > p'
-  await page.waitForSelector(descrip, {
-    visible: true,
-  });
-  const descripDD = await page.evaluate(descrip => {
-    const d = document.querySelector(descrip);
-    return d.innerHTML.trim()
-  }, descrip)
+    const noMsg = '.messenger-close'
+    await page.waitForSelector(noMsg, {
+      visible: true,
+    });
+    await page.click(noMsg);
 
-  // Precio del producto
-  const price = '.price-box > span.price'
-  await page.waitForSelector(price, {
-    visible: true,
-  });
-  const precioDD = await page.evaluate(price => {
-    let elem = document.querySelector(price).innerHTML
-    let newS = elem.trim().slice(0, -3)
-    return newS
-  }, price)
+    const verCar = 'ul.nav > li > a[title="Carrito"]'
+    await page.waitForSelector(verCar, {
+      visible: true,
+    });
+    await page.click(verCar);
 
-  const img = '#slideslide0 > a > .img-responsive'
-  await page.waitForSelector(img, {
-    visible: true,
-  });
-  const imagen = await page.$$eval(img, (image) =>
-    image.map((img) => img.getAttribute("src"))
-  );
-  const image = imagen[0]
+    await waitTillHTMLRendered(page)
 
-  // Ir a ver el precio del envío
-  const carDD = '.quantity-container > .row > .col-sm-7 > .add-cart'
-  await page.waitForSelector(carDD, {
-    visible: true,
-  });
-  await page.click(carDD);
+    // Precio de envio del producto
+    const send = '.cart-sub-total > .form-group > #shipping-price'
+    await page.waitForSelector(send, {
+      visible: true,
+    });
+    const costEnvDD = await page.evaluate(send => {
+      let s = document.querySelector(send).innerHTML
+      let newS = s.slice(0, -3)
+      return newS
+    }, send)
 
-  const noMsg = '.messenger-close'
-  await page.waitForSelector(noMsg, {
-    visible: true,
-  });
-  await page.click(noMsg);
+    const elimCar = '#delete-entire-cart'
+    await page.waitForSelector(elimCar, {
+      visible: true,
+    });
+    await page.click(elimCar);
 
-  const verCar = 'ul.nav > li > a[title="Carrito"]'
-  await page.waitForSelector(verCar, {
-    visible: true,
-  });
-  await page.click(verCar);
+    let cosasDD = [nomDD, linkDD, descripDD, precioDD, costEnvDD, image]
 
-  await waitTillHTMLRendered(page)
+    browser.close();
 
-  // Precio de envio del producto
-  const send = '.cart-sub-total > .form-group > #shipping-price'
-  await page.waitForSelector(send, {
-    visible: true,
-  });
-  const costEnvDD = await page.evaluate(send => {
-    let s = document.querySelector(send).innerHTML
-    let newS = s.slice(0, -3)
-    return newS
-  }, send)
-
-  const elimCar = '#delete-entire-cart'
-  await page.waitForSelector(elimCar, {
-    visible: true,
-  });
-  await page.click(elimCar);
-
-  let cosasDD = [nomDD, linkDD, descripDD, precioDD, costEnvDD, image]
-
-  browser.close();
-
-  return cosasDD
+    return cosasDD
+  })
+  return ddTech
 }
 
 // Función búsqueda completa
-async function search(dato, ram, ssd) {
-  const browser = await puppeteer.launch({ headless: false });
-  const mlPg = await browser.newPage();
-  const ddPg = await browser.newPage();
-  const amazonPg = await browser.newPage();
+async function search(dato, ram, ramCap, ssd, ssdCap) {
+  const all = await puppeteer.launch({ headless: false, executablePath: executablePath() }).then(async browser => {
 
-  amazonPg.setDefaultTimeout(0);
-  mlPg.setDefaultTimeout(0);
+    const mlPg = await browser.newPage();
+    const ddPg = await browser.newPage();
+    const amazonPg = await browser.newPage();
 
-  await amazonPg.goto('https://www.amazon.com.mx/');
-  await mlPg.goto('https://www.mercadolibre.com.mx/');
-  await ddPg.goto('https://ddtech.mx/', { 'waitUntil': 'load' });
+    amazonPg.setDefaultTimeout(0);
+    mlPg.setDefaultTimeout(0);
 
-  // await ddPg.waitForNavigation()
-  await waitTillHTMLRendered(ddPg)
+    await amazonPg.goto('https://www.amazon.com.mx/', { 'waitUntil': 'load' });
+    await mlPg.goto('https://www.mercadolibre.com.mx/');
+    await ddPg.goto('https://ddtech.mx/', { 'waitUntil': 'load' });
 
-  // Establece tamaño de ventana
-  await amazonPg.setViewport({ width: 1366, height: 720 });
-  await mlPg.setViewport({ width: 1366, height: 720 });
-  await ddPg.setViewport({ width: 1366, height: 720 });
+    // Establece tamaño de ventana
+    await amazonPg.setViewport({ width: 1366, height: 720 });
+    await mlPg.setViewport({ width: 1366, height: 720 });
+    await ddPg.setViewport({ width: 1366, height: 720 });
 
-  // Teclea en barra de buscador
-  await amazonPg.type('#twotabsearchtextbox', dato);
-  await mlPg.type('#cb1-edit', dato);
-  const buscaDD = '.search-container > form > .input-group > #search';
-  await ddPg.waitForSelector(buscaDD, {
-    visible: true,
-  });
-  await ddPg.click(buscaDD);
-  await ddPg.type(buscaDD, dato);
+    // await ddPg.waitForNavigation()
+    await ddPg.waitForTimeout(7000)
+    await waitTillHTMLRendered(ddPg)
 
-  // Busca boton de 'busqueda' y lo clickea
-  const buscarAmazon = '#nav-search-submit-button';
-  await amazonPg.waitForSelector(buscarAmazon, {
-    visible: true,
-  });
-  await amazonPg.click(buscarAmazon);
-
-  const buscarML = '.nav-search-btn';
-  await mlPg.waitForSelector(buscarML, {
-    visible: true,
-  });
-  await mlPg.click(buscarML);
-
-  const buscarDD = 'span.input-group-btn > .btn-seach';
-  await ddPg.waitForSelector(buscarDD, {
-    visible: true,
-  });
-  await ddPg.click(buscarDD);
-
-  // Buscar resultado de 4 estrellas o mas en Amazon
-  // const cuatroOmas = 'section > .a-star-medium-4'
-  // await amazonPg.waitForSelector(cuatroOmas, {
-  //   visible: true,
-  // });
-  // await amazonPg.click(cuatroOmas);
-
-  // Se va al primer producto encontrado
-  const linkprodAmazon = 'span[data-component-type="s-product-image"] > a'
-  await amazonPg.waitForSelector(linkprodAmazon, {
-    visible: true,
-  });
-  await amazonPg.click(linkprodAmazon);
-
-  const linkProdML = '.ui-search-item__title'
-  await mlPg.waitForSelector(linkProdML, {
-    visible: true,
-  });
-  await mlPg.click(linkProdML);
-
-  await waitTillHTMLRendered(ddPg)
-
-  if (ram) {
-    const onlyRAM = '.breadcrumb-custom > li > a[title="Memoria RAM"]'
-    await ddPg.waitForSelector(onlyRAM, {
+    // Teclea en barra de buscador
+    await amazonPg.type('#twotabsearchtextbox', dato);
+    await mlPg.type('#cb1-edit', dato);
+    const buscaDD = '.search-container > form > .input-group > #search';
+    await ddPg.waitForSelector(buscaDD, {
       visible: true,
     });
-    await ddPg.click(onlyRAM);
+    await ddPg.click(buscaDD);
+    await ddPg.type(buscaDD, dato);
 
-    const searchRAM = '#stock'
-    await ddPg.waitForSelector(searchRAM, {
+    // Busca boton de 'busqueda' y lo clickea
+    const buscarAmazon = '#nav-search-submit-button';
+    await amazonPg.waitForSelector(buscarAmazon, {
       visible: true,
     });
-    await ddPg.click(searchRAM);
+    await amazonPg.click(buscarAmazon);
+
+    const buscarML = '.nav-search-btn';
+    await mlPg.waitForSelector(buscarML, {
+      visible: true,
+    });
+    await mlPg.click(buscarML);
+
+    await mlPg.waitForTimeout(7000)
+
+    const buscarDD = 'span.input-group-btn > .btn-seach';
+    await ddPg.waitForSelector(buscarDD, {
+      visible: true,
+    });
+    await ddPg.click(buscarDD);
+
+    // Se va al primer producto encontrado
+    const linkprodAmazon = 'span[data-component-type="s-product-image"] > a'
+    await amazonPg.waitForSelector(linkprodAmazon, {
+      visible: true,
+    });
+    await amazonPg.click(linkprodAmazon);
+
+    const linkProdML = 'a .ui-search-item__title'
+    await mlPg.waitForSelector(linkProdML, {
+      visible: true,
+    });
+    await mlPg.click(linkProdML);
+
+    // await ddPg.waitForTimeout(7000)
+    await waitTillHTMLRendered(ddPg)
+
+    if (ram) {
+      const onlyRAM = '.breadcrumb-custom > li > a[title="Memoria RAM"]'
+      await ddPg.waitForSelector(onlyRAM, {
+        visible: true,
+      });
+      await ddPg.click(onlyRAM);
+
+      const searchRAM = `ul input[data-slug="${ramCap}"]`
+      await ddPg.waitForSelector(searchRAM, {
+        visible: true,
+      });
+      await ddPg.click(searchRAM);
+
+      // await ddPg.waitForTimeout(7000)
+      await waitTillHTMLRendered(ddPg)
+    }
+
+    if (ssd) {
+      const onlySSD = '.breadcrumb-custom > li > a[title="Unidades SSD"]'
+      await ddPg.waitForSelector(onlySSD, {
+        visible: true,
+      });
+      await ddPg.click(onlySSD);
+
+      const searchSSD = `ul input[data-slug="${ssdCap}"]`
+      await ddPg.waitForSelector(searchSSD, {
+        visible: true,
+      });
+      await ddPg.click(searchSSD);
+
+      // await ddPg.waitForTimeout(7000)
+      await waitTillHTMLRendered(ddPg)
+    }
+
+    const linkProdDD = '.product-info > .name > a'
+    await ddPg.waitForSelector(linkProdDD, {
+      visible: true,
+    });
+    await ddPg.click(linkProdDD);
+
+    // await ddPg.waitForTimeout(7000)
+    await waitTillHTMLRendered(ddPg)
+
+    // Informacion a encontrar -----------------------------
+    // Nombre de producto
+    const nomAm = dato
+    const nomML = dato
+    const nomDD = dato
+
+    // Link de producto
+    const linkAm = amazonPg.url()
+    const linkML = mlPg.url()
+    const linkDD = ddPg.url()
+
+    // Descripcion del producto
+    const descrip1 = '#title > #productTitle'
+    await amazonPg.waitForSelector(descrip1, {
+      visible: true,
+    });
+    const descripAm = await amazonPg.evaluate(descrip1 => {
+      const d = document.querySelector(descrip1);
+      return d.innerHTML.trim()
+    }, descrip1)
+
+    const descrip2 = '.ui-pdp-header > .ui-pdp-header__title-container > h1'
+    await mlPg.waitForSelector(descrip2, {
+      visible: true,
+    });
+    const descripML = await mlPg.evaluate(descrip2 => {
+      const d = document.querySelector(descrip2);
+      return d.innerHTML
+    }, descrip2)
+
+    const descrip3 = '.product-info-block > .product-info > .description-container > p'
+    await ddPg.waitForSelector(descrip3, {
+      visible: true,
+    });
+    const descripDD = await ddPg.evaluate(descrip3 => {
+      const d = document.querySelector(descrip3);
+      return d.innerHTML.trim()
+    }, descrip3)
+
+    // Precio del producto
+    const price1 = '.a-price > span[aria-hidden="true"] > span.a-price-whole'
+    await amazonPg.waitForSelector(price1, {
+      visible: true,
+    });
+    const precioAm = await amazonPg.evaluate(price1 => {
+      let elem = document.querySelector(price1).innerHTML
+      let i = elem.indexOf("<")
+      let newS = elem.slice(0, i)
+      let num = `$${newS}`
+      return num
+    }, price1)
+
+    const price2 = '.ui-pdp-price__second-line > .andes-money-amount > .andes-money-amount__fraction'
+    await mlPg.waitForSelector(price2, {
+      visible: true,
+    });
+    const precioML = await mlPg.evaluate(price2 => {
+      let elem = document.querySelector(price2).innerHTML
+      let newS = `$${elem}`
+      return newS
+    }, price2)
+
+    const price3 = '.price-box > span.price'
+    await ddPg.waitForSelector(price3, {
+      visible: true,
+    });
+    const precioDD = await ddPg.evaluate(price3 => {
+      let elem = document.querySelector(price3).innerHTML
+      let newS = elem.trim().slice(0, -3)
+      return newS
+    }, price3)
+
+    // Imagen del producto
+    const img1 = 'li[data-csa-c-action="image-block-main-image-hover"] img'
+    await amazonPg.waitForSelector(img1, {
+      visible: true,
+    })
+    const imagen1 = await amazonPg.$$eval(img1, (image) =>
+      image.map((img) => img.getAttribute("src"))
+    );
+    const image1 = imagen1[0]
+
+    const img2 = 'img.ui-pdp-image.ui-pdp-gallery__figure__image[src]'
+    await mlPg.waitForSelector(img2, {
+      visible: true,
+    });
+    const imgs2 = await mlPg.$$eval(img2, (imgs2) =>
+      imgs2.map((img) => img.getAttribute("src"))
+    );
+    const filter = imgs2.filter((img) => img.startsWith("h"));
+    const image2 = filter[0];
+
+    const img3 = '#slideslide0 > a > .img-responsive'
+    await ddPg.waitForSelector(img3, {
+      visible: true,
+    });
+    const imagen3 = await ddPg.$$eval(img3, (image) =>
+      image.map((img) => img.getAttribute("src"))
+    );
+    const image3 = imagen3[0]
+
+    // Precio de envio del producto
+    let amNewS = ''
+    const send1 = '#mir-layout-DELIVERY_BLOCK-slot-PRIMARY_DELIVERY_MESSAGE_LARGE > span'
+    if (await amazonPg.evaluate(send1 => { }) != null) {
+      await amazonPg.evaluate(send1 => {
+        let s = document.querySelector(send1).innerHTML
+        let i = s.indexOf("$")
+        if (i != -1) {
+          let dot = s.indexOf(".")
+          amNewS = s.slice(i, dot + 3)
+        } else {
+          amNewS = "Envío Gratis"
+        }
+      }, send1)
+    } else {
+      amNewS = "Envío Gratis"
+    }
+    const costEnvAm = amNewS
+
+    let newS = ''
+    const send2 = '.andes-tooltip__trigger > .ui-pdp-color--GREEN'
+    if (await mlPg.evaluate(send2 => { }) != null) {
+      await mlPg.evaluate(send2 => {
+        let s = document.querySelector(send2).innerHTML
+        let i = s.indexOf("<")
+        newS = s.slice(0, i).trim()
+      }, send2)
+    } else {
+      newS = 'Envío gratis a todo el país'
+    }
+    const costEnvML = newS
+
+    await ddPg.waitForTimeout(7000)
+
+    const carDD = '.quantity-container > .row > .col-sm-7 > .add-cart'
+    await ddPg.waitForSelector(carDD, {
+      visible: true,
+    });
+    await ddPg.click(carDD);
+
+    const noMsg = '.messenger-close'
+    await ddPg.waitForSelector(noMsg, {
+      visible: true,
+    });
+    await ddPg.click(noMsg);
+
+    const verCarDD = 'a[title="Carrito"]'
+    await ddPg.waitForSelector(verCarDD, {
+      visible: true,
+    });
+    await ddPg.click(verCarDD);
 
     await waitTillHTMLRendered(ddPg)
 
-  }
-
-  if (ssd) {
-    const onlySSD = '.breadcrumb-custom > li > a[title="Unidades SSD"]'
-    await ddPg.waitForSelector(onlySSD, {
+    const send3 = '#shipping-price'
+    await ddPg.waitForSelector(send3, {
       visible: true,
     });
-    await ddPg.click(onlySSD);
+    const costEnvDD = await ddPg.evaluate(send3 => {
+      let s = document.querySelector(send3).innerHTML
+      let newS = s.slice(0, -3)
+      return newS
+    }, send3)
 
-    const searchSSD = '#stock'
-    await ddPg.waitForSelector(searchSSD, {
+    const elimCarDD = '#delete-entire-cart'
+    await ddPg.waitForSelector(elimCarDD, {
       visible: true,
     });
-    await ddPg.click(searchSSD);
+    await ddPg.click(elimCarDD);
 
-    await waitTillHTMLRendered(ddPg)
-  }
+    const cosasAmazon = [nomAm, linkAm, descripAm, precioAm, costEnvAm, "Amazon", image1]
+    const cosasMerLib = [nomML, linkML, descripML, precioML, costEnvML, "Mercado", image2]
+    const cosasDD = [nomDD, linkDD, descripDD, precioDD, costEnvDD, "DDTech", image3]
+    const cosasAll = [cosasAmazon, cosasMerLib, cosasDD]
 
-  const linkProdDD = '.product-info > .name > a'
-  await ddPg.waitForSelector(linkProdDD, {
-    visible: true,
-  });
-  await ddPg.click(linkProdDD);
+    await browser.close();
 
-  await waitTillHTMLRendered(ddPg)
-
-  // Informacion a encontrar -----------------------------
-  // Nombre de producto
-  const nomAm = dato
-  const nomML = dato
-  const nomDD = dato
-
-  // Link de producto
-  const linkAm = amazonPg.url()
-  const linkML = mlPg.url()
-  const linkDD = ddPg.url()
-
-  // Descripcion del producto
-  const descrip1 = '#title > #productTitle'
-  await amazonPg.waitForSelector(descrip1, {
-    visible: true,
-  });
-  const descripAm = await amazonPg.evaluate(descrip1 => {
-    const d = document.querySelector(descrip1);
-    return d.innerHTML.trim()
-  }, descrip1)
-
-  const descrip2 = '.ui-pdp-header > .ui-pdp-header__title-container > h1'
-  await mlPg.waitForSelector(descrip2, {
-    visible: true,
-  });
-  const descripML = await mlPg.evaluate(descrip2 => {
-    const d = document.querySelector(descrip2);
-    return d.innerHTML
-  }, descrip2)
-
-  const descrip3 = '.product-info-block > .product-info > .description-container > p'
-  await ddPg.waitForSelector(descrip3, {
-    visible: true,
-  });
-  const descripDD = await ddPg.evaluate(descrip3 => {
-    const d = document.querySelector(descrip3);
-    return d.innerHTML.trim()
-  }, descrip3)
-
-  // Precio del producto
-  const price1 = '.a-price > span[aria-hidden="true"] > span.a-price-whole'
-  await amazonPg.waitForSelector(price1, {
-    visible: true,
-  });
-  const precioAm = await amazonPg.evaluate(price1 => {
-    let elem = document.querySelector(price1).innerHTML
-    let i = elem.indexOf("<")
-    let newS = elem.slice(0, i)
-    let num = `$${newS}`
-    return num
-  }, price1)
-
-  const price2 = 'div > .andes-money-amount > .andes-money-amount__fraction'
-  await mlPg.waitForSelector(price2, {
-    visible: true,
-  });
-  const precioML = await mlPg.evaluate(price2 => {
-    let elem = document.querySelector(price2).innerHTML
-    let newS = `$${elem}`
-    return newS
-  }, price2)
-
-  const price3 = '.price-box > span.price'
-  await ddPg.waitForSelector(price3, {
-    visible: true,
-  });
-  const precioDD = await ddPg.evaluate(price3 => {
-    let elem = document.querySelector(price3).innerHTML
-    let newS = elem.trim().slice(0, -3)
-    return newS
-  }, price3)
-
-  // Imagen del producto
-  const img1 = 'li[data-csa-c-action="image-block-main-image-hover"] img'
-  await amazonPg.waitForSelector(img1, {
-    visible: true,
+    return cosasAll
   })
-  const imagen1 = await amazonPg.$$eval(img1, (image) =>
-    image.map((img) => img.getAttribute("src"))
-  );
-  const image1 = imagen1[0]
-
-  const img2 = 'img.ui-pdp-image.ui-pdp-gallery__figure__image[src]'
-  await mlPg.waitForSelector(img2, {
-    visible: true,
-  });
-  const imgs2 = await mlPg.$$eval(img2, (imgs2) =>
-    imgs2.map((img) => img.getAttribute("src"))
-  );
-  const filter = imgs2.filter((img) => img.startsWith("h"));
-  const image2 = filter[0];
-
-  const img3 = '#slideslide0 > a > .img-responsive'
-  await ddPg.waitForSelector(img3, {
-    visible: true,
-  });
-  const imagen3 = await ddPg.$$eval(img3, (image) =>
-    image.map((img) => img.getAttribute("src"))
-  );
-  const image3 = imagen3[0]
-
-  // Precio de envio del producto
-  let amNewS = ''
-  const send1 = '#mir-layout-DELIVERY_BLOCK-slot-PRIMARY_DELIVERY_MESSAGE_LARGE > span'
-  if (await amazonPg.evaluate(send1 => { }) != null) {
-    await amazonPg.evaluate(send1 => {
-      let s = document.querySelector(send1).innerHTML
-      let i = s.indexOf("$")
-      if (i != -1) {
-        let dot = s.indexOf(".")
-        amNewS = s.slice(i, dot + 3)
-      } else {
-        amNewS = "Envío Gratis"
-      }
-    }, send1)
-  } else {
-    amNewS = "Envío Gratis"
-  }
-  const costEnvAm = amNewS
-
-  let newS = ''
-  const send2 = '.andes-tooltip__trigger > .ui-pdp-color--GREEN'
-  if (await mlPg.evaluate(send2 => { }) != null) {
-    await mlPg.evaluate(send2 => {
-      let s = document.querySelector(send2).innerHTML
-      let i = s.indexOf("<")
-      newS = s.slice(0, i).trim()
-    }, send2)
-  } else {
-    newS = 'Envío gratis a todo el país'
-  }
-  const costEnvML = newS
-
-  const carDD = '.quantity-container > .row > .col-sm-7 > .add-cart'
-  await ddPg.waitForSelector(carDD, {
-    visible: true,
-  });
-  await ddPg.click(carDD);
-
-  const noMsg = '.messenger-close'
-  await ddPg.waitForSelector(noMsg, {
-    visible: true,
-  });
-  await ddPg.click(noMsg);
-
-  const verCarDD = 'a[title="Carrito"]'
-  await ddPg.waitForSelector(verCarDD, {
-    visible: true,
-  });
-  await ddPg.click(verCarDD);
-
-  await waitTillHTMLRendered(ddPg)
-
-  const send3 = '#shipping-price'
-  await ddPg.waitForSelector(send3, {
-    visible: true,
-  });
-  const costEnvDD = await ddPg.evaluate(send3 => {
-    let s = document.querySelector(send3).innerHTML
-    let newS = s.slice(0, -3)
-    return newS
-  }, send3)
-
-  const elimCarDD = '#delete-entire-cart'
-  await ddPg.waitForSelector(elimCarDD, {
-    visible: true,
-  });
-  await ddPg.click(elimCarDD);
-
-  const cosasAmazon = [nomAm, linkAm, descripAm, precioAm, costEnvAm, "Amazon", image1]
-  const cosasMerLib = [nomML, linkML, descripML, precioML, costEnvML, "Mercado", image2]
-  const cosasDD = [nomDD, linkDD, descripDD, precioDD, costEnvDD, "DDTech", image3]
-  const cosasAll = [cosasAmazon, cosasMerLib, cosasDD]
-
-  await browser.close();
-
-  return cosasAll
+  return all
 }
 
 // Función para esperar a que las paginas (en nuestro caso DDTech) carguen todos sus scripts y elementos

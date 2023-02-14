@@ -11,7 +11,7 @@
                     <form id="contactForm" method="post" action="/escoger">
                         <!-- Procesador-->
                         <div class="form-floating mb-3">
-                            <select id="proc" name="proc" class="form-control" placeholder="Procesador">
+                            <select id="proc" name="proc" class="form-control" placeholder="Procesador" required>
                                 <option value="" disabled selected></option>
                                 <option value="Procesador AMD Ryzen 5 5600G">AMD Ryzen 5 5600G</option>
                                 <option value="Procesador AMD Ryzen 5 4600G">AMD Ryzen 5 4600G</option>
@@ -23,7 +23,7 @@
 
                         <!-- Tarjeta Madre-->
                         <div class="form-floating mb-3">
-                            <select id="tarMad" name="tarMad" class="form-control" placeholder="Tarjeta Madre">
+                            <select id="tarMad" name="tarMad" class="form-control" placeholder="Tarjeta Madre" required>
                                 <option value="" disabled selected></option>
                                 <option value="Tarjeta Madre Gigabyte A520M H">Gigabyte A520M H</option>
                                 <option value="Tarjeta Madre MSI B550M PRO-VDH WIFI">MSI B550M PRO-VDH WIFI</option>
@@ -33,7 +33,7 @@
 
                         <!-- RAM-->
                         <div class="form-floating mb-3">
-                            <select id="ram" name="ram" class="form-control" placeholder="RAM">
+                            <select id="ram" name="ram" class="form-control" placeholder="RAM" required>
                                 <option value="" disabled selected></option>
                                 <option value="Memoria RAM DDR4 4GB">4GB</option>
                                 <option value="Memoria RAM DDR4 8GB">8GB</option>
@@ -45,7 +45,7 @@
 
                         <!-- Memoria SSD-->
                         <div class="form-floating mb-3">
-                            <select id="ssd" name="ssd" class="form-control" placeholder="Memoria SSD">
+                            <select id="ssd" name="ssd" class="form-control" placeholder="Memoria SSD" required>
                                 <option value="" disabled selected></option>
                                 <option value="SSD 256GB">256GB</option>
                                 <option value="SSD 512GB">512GB</option>
@@ -57,10 +57,10 @@
 
                         <!-- Fuente de Poder-->
                         <div class="form-floating mb-3">
-                            <select id="power" name="power" class="form-control" placeholder="Fuente de Poder">
+                            <select id="power" name="power" class="form-control" placeholder="Fuente de Poder" required>
                                 <option value="" disabled selected></option>
                                 <option value="Fuente de Poder Munfrost Power Box GP-500">500w</option>
-                                <option value="Fuente de Poder 850 B5 EVGA">850w</option>
+                                <option value="Fuente de poder Munfrost Power Box RGB 850W">850w</option>
                                 <option value="Fuente de poder Corsair RM1000x">1000w</option>
                             </select>
                             <label for="power">Fuente de Poder</label>
@@ -68,7 +68,7 @@
 
                         <!-- Gabinete-->
                         <div class="form-floating mb-3">
-                            <select id="gabinete" name="gabinete" class="form-control" placeholder="Gabinete">
+                            <select id="gabinete" name="gabinete" class="form-control" placeholder="Gabinete" required>
                                 <option value="" disabled selected></option>
                                 <option value="Gabinete DEEPCOOL CH510 MESH DIGITAL">DEEPCOOL CH510 MESH
                                     DIGITAL Micro-ATX</option>
